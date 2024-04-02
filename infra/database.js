@@ -10,11 +10,32 @@ async function query(queryObj) {
   });
   await client.connect();
 
-  const result = await client.query(queryObj);
-  await client.end();
-  return result;
+  try {
+    const result = await client.query(queryObj);
+    return result;
+  } catch (Error) {
+    console.log(Error);
+  } finally {
+    await client.end();
+  }
 }
 
+async function getDbVersion() {
+  return query("SHOW server_version;");
+}
+
+async function getMaxConnections() {
+  return query("SHOW MAX_CONNECTIONS;");
+}
+async function getCurrentUsedConnections(databaseName) {
+  return query({
+    text: "SELECT COUNT(*) ::int FROM pg_stat_activity WHERE datname = $1;",
+    values: [databaseName],
+  });
+}
 export default {
   query: query,
+  getDbVersion: getDbVersion,
+  getMaxConnections: getMaxConnections,
+  getCurrentUsedConnections: getCurrentUsedConnections,
 };
