@@ -1,17 +1,8 @@
 import { Client } from "pg";
 
 async function query(queryObj) {
-  const client = new Client({
-    host: process.env.POSTGRES_HOST,
-    port: process.env.POSTGRES_PORT,
-    user: process.env.POSTGRES_USER,
-    database: process.env.POSTGRES_DB,
-    password: process.env.POSTGRES_PASSWORD,
-    ssl: GetSSLValue(),
-  });
-
+  let client = await getNewClient();
   try {
-    await client.connect();
     const result = await client.query(queryObj);
     return result;
   } catch (error) {
@@ -20,6 +11,19 @@ async function query(queryObj) {
   } finally {
     await client.end();
   }
+}
+
+async function getNewClient() {
+  const client = new Client({
+    host: process.env.POSTGRES_HOST,
+    port: process.env.POSTGRES_PORT,
+    user: process.env.POSTGRES_USER,
+    database: process.env.POSTGRES_DB,
+    password: process.env.POSTGRES_PASSWORD,
+    ssl: GetSSLValue(),
+  });
+  await client.connect();
+  return client;
 }
 
 async function getDbVersion() {
@@ -36,10 +40,11 @@ async function getCurrentUsedConnections(databaseName) {
   });
 }
 export default {
-  query: query,
-  getDbVersion: getDbVersion,
-  getMaxConnections: getMaxConnections,
-  getCurrentUsedConnections: getCurrentUsedConnections,
+  query,
+  getDbVersion,
+  getMaxConnections,
+  getCurrentUsedConnections,
+  getNewClient,
 };
 
 function GetSSLValue() {
@@ -49,5 +54,5 @@ function GetSSLValue() {
     };
   }
 
-  return process.env.NODE_ENV === "development" ? false : true;
+  return process.env.NODE_ENV === "production" ? true : false;
 }
