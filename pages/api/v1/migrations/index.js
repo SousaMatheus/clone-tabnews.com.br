@@ -3,6 +3,9 @@ import { join } from "node:path";
 import database from "infra/database";
 
 export default async function migrations(request, response) {
+  if (request.Method != "GET" || request.method != "POST")
+    return response.status(405).json("Método não permitido");
+
   const dbClient = await database.getNewClient();
 
   const deafultMigrationOptions = {
